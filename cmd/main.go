@@ -2,9 +2,12 @@ package main
 
 import (
 	"log"
+	"os"
 	"path"
 
 	"runtime"
+
+	"flag"
 
 	"github.com/JulianTeschner/githubCli/handler"
 	"github.com/joho/godotenv"
@@ -13,9 +16,28 @@ import (
 func main() {
 	loadEnv()
 
-	// handler.GetUser()
-	handler.CreateEmptyRepo("EmptyTemplate", "JulianTeschner", "githubCli", "This is a auto-generated repository")
-	// handler.DeleteRepo("JulianTeschner", "test")
+	githubUsername := flag.String("user", os.Getenv("DEFAULT_USER"), "Github Username")
+	repoTemplate := flag.String("template", os.Getenv("DEFAULT_Template"), "Template to use")
+	projectName := flag.String("name", "", "Name of the project")
+	repoDescription := flag.String("description", "This is a auto-generated repository", "Description of the project")
+	method := flag.String("method", "", "Method to use")
+	clone := flag.Bool("clone", false, "Clone the new Repo to the current directory")
+
+	flag.Parse()
+
+	switch *method {
+	case "create":
+		handler.CreateEmptyRepo(repoTemplate, githubUsername, projectName, repoDescription)
+	case "delete":
+		handler.DeleteRepo(githubUsername, projectName)
+	default:
+		log.Println("No method specified")
+	}
+
+	if *clone {
+		handler.CloneRepoHandler(githubUsername, projectName)
+	}
+
 }
 
 func loadEnv() {
@@ -25,7 +47,7 @@ func loadEnv() {
 		filepath := path.Join(path.Dir(filename), ".env")
 		err := godotenv.Load(filepath)
 		if err != nil {
-			log.Fatal("No .env file found in cmd Folder")
+			log.Println("No .env file found in cmd Folder... Trying to use default values")
 		}
 	}
 }

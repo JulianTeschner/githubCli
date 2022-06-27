@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/JulianTeschner/githubCli/models"
 )
@@ -44,19 +45,18 @@ func GetUser() {
 	log.Println(string(body))
 }
 
-func CreateEmptyRepo(template string, owner string, name string, description string) {
+func CreateEmptyRepo(template *string, owner *string, name *string, description *string) {
 
-	url := baseUrl + fmt.Sprintf("/repos/JulianTeschner/%s/generate", template)
+	url := baseUrl + fmt.Sprintf("/repos/JulianTeschner/%s/generate", *template)
 	method := "POST"
 
-	repo := models.NewRepo(owner, name, description)
+	repo := models.NewRepo(*owner, *name, *description)
 
 	body, err := json.Marshal(repo)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println(string(body))
 
 	data := []byte(body)
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
@@ -75,17 +75,17 @@ func CreateEmptyRepo(template string, owner string, name string, description str
 	}
 	defer res.Body.Close()
 
-	body, err = ioutil.ReadAll(res.Body)
+	_, err = ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println(string(body))
+	log.Println("Repo was successfully created")
 }
 
-func DeleteRepo(owner string, name string) {
+func DeleteRepo(owner *string, name *string) {
 
-	url := baseUrl + fmt.Sprintf("/repos/%s/%s", owner, name)
+	url := baseUrl + fmt.Sprintf("/repos/%s/%s", *owner, *name)
 	method := "DELETE"
 
 	req, err := http.NewRequest(method, url, nil)
@@ -104,10 +104,25 @@ func DeleteRepo(owner string, name string) {
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	_, err = ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println(string(body))
+	log.Println("Repo successfully deleted")
+}
+
+func CloneRepoHandler(owner *string, name *string) {
+	log.Println("Clone new Repo")
+
+	s := fmt.Sprintf("git@github.com:%s/%s.git", *owner, *name)
+	cmd := exec.Command("git", "clone", s)
+	err := cmd.Run()
+	errorHandler(err)
+}
+
+func errorHandler(err error) {
+	if err != nil {
+		log.Println(err)
+	}
 }
